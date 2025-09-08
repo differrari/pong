@@ -24,6 +24,11 @@ void draw(gpu_rect rect, color color){
     fb_fill_rect(&ctx, rect.point.x, rect.point.y, rect.size.width, rect.size.height, color);
 }
 
+void redraw(gpu_rect old_rect, gpu_rect rect, color color){
+    fb_fill_rect(&ctx, old_rect.point.x, old_rect.point.y, old_rect.size.width, old_rect.size.height, BG_COLOR);
+    fb_fill_rect(&ctx, rect.point.x, rect.point.y, rect.size.width, rect.size.height, color);
+}
+
 bool collide(gpu_rect a, gpu_rect b){
     uint32_t ax2 = a.point.x + a.size.width;
     uint32_t ay2 = a.point.y + a.size.height;
@@ -31,6 +36,10 @@ bool collide(gpu_rect a, gpu_rect b){
     uint32_t by2 = b.point.y + b.size.height;
 
     return (ax2 >= b.point.x && a.point.x <= bx2 && ay2 >= b.point.y && a.point.y <= by2);
+}
+
+bool compare_rects(gpu_rect a, gpu_rect b){
+    return a.point.x == b.point.x && a.point.y == b.point.y && a.size.width == b.size.width && a.size.height == b.size.height;
 }
 
 void reset(){
@@ -55,6 +64,13 @@ void reset(){
         .size = { ctx.width - 1, SCALE}
     };
     ball_velocity = (ivector2){ SCALE, SCALE };
+    fb_clear(&ctx, BG_COLOR);
+
+    draw(p1paddle, PADDLE_COLOR);
+    draw(p2paddle, single_player ? BORDER_COLOR : PADDLE_COLOR);
+    draw(border1, BORDER_COLOR);
+    draw(border2, BORDER_COLOR);
+    draw(ball, BALL_COLOR);
 }
 
 void update_ball(){
@@ -72,7 +88,10 @@ void update_ball(){
         ball_velocity = (ivector2){-ball_velocity.x,ball_velocity.y};
     } else if (!collide(next_ball, (gpu_rect){0,0,ctx.width, ctx.height})){
         reset();
-    } else ball = next_ball;
+    } else {
+        redraw(ball, next_ball, BALL_COLOR);
+        ball = next_ball;
+    }
 }
 
 int main(int argc, char* argv[]){
@@ -81,20 +100,19 @@ int main(int argc, char* argv[]){
     reset();
     //Game loop function
     while (true){
+        ctx.full_redraw = true;
         //Input section
         keypress kp = {};
         if (read_key(&kp)){
+            gpu_rect old_rect = p1paddle;
             if (kp.keys[0] == KEY_UP) p1paddle.point.y = max(p1paddle.point.y - SCALE, SCALE);
             if (kp.keys[0] == KEY_DOWN) p1paddle.point.y = min(p1paddle.point.y + SCALE, ctx.height - (SCALE * 4) - 1);
+            if (kp.keys[0] == KEY_ESC) return 0;
+            if (!compare_rects(old_rect, p1paddle)){
+                redraw(old_rect, p1paddle, PADDLE_COLOR);
+            }
         }
-        //Render section
-        // ctx.full_redraw = true;
-        fb_clear(&ctx, BG_COLOR);
-        draw(p1paddle, PADDLE_COLOR);
-        draw(p2paddle, single_player ? BORDER_COLOR : PADDLE_COLOR);
-        draw(border1, BORDER_COLOR);
-        draw(border2, BORDER_COLOR);
-        draw(ball, BALL_COLOR);
+
         update_ball();
         commit_draw_ctx(&ctx);
     }

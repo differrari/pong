@@ -3,6 +3,7 @@
 #include "math/math.h"
 
 gpu_rect p1paddle, p2paddle, ball, border1, border2;
+gpu_rect safe_area;
 draw_ctx ctx = {};
 
 typedef struct ivector2 {
@@ -78,7 +79,10 @@ void update_ball(){
     next_ball.point.x += ball_velocity.x;
     next_ball.point.y += ball_velocity.y;
 
-    if (collide(next_ball, border2)){
+    if (collide(next_ball, safe_area)) {
+        redraw(ball, next_ball, BALL_COLOR);
+        ball = next_ball;
+    } else if (collide(next_ball, border2)){
         ball_velocity = (ivector2){ball_velocity.x,-ball_velocity.y};
     } else if (collide(next_ball, p2paddle)){
         ball_velocity = (ivector2){-ball_velocity.x,ball_velocity.y};
@@ -97,13 +101,17 @@ void update_ball(){
 int main(int argc, char* argv[]){
     request_draw_ctx(&ctx);
     //Setup function
+    safe_area = (gpu_rect){
+        .point = { SCALE * 3, SCALE * 3},
+        .size = { ctx.width - (SCALE * 6), ctx.height - (SCALE * 6)}
+    };
     reset();
     //Game loop function
     while (true){
         ctx.full_redraw = true;
-        //Input section
+        //Update
         keypress kp = {};
-        if (read_key(&kp)){
+        for (int i = 0; i < 5 && read_key(&kp); i++){
             gpu_rect old_rect = p1paddle;
             if (kp.keys[0] == KEY_UP) p1paddle.point.y = max(p1paddle.point.y - SCALE, SCALE);
             if (kp.keys[0] == KEY_DOWN) p1paddle.point.y = min(p1paddle.point.y + SCALE, ctx.height - (SCALE * 4) - 1);

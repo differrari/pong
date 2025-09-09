@@ -138,7 +138,6 @@ int run_game(uint64_t target_fps){
     uint64_t target_dt = target_fps == 0 ? 0 : (1/30.f)*1000;
     while (true){
         float dt = delta_time/1000.f;
-        ctx.full_redraw = true;
         update(dt);
 
         commit_draw_ctx(&ctx);

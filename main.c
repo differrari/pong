@@ -24,6 +24,8 @@ ivector2 ball_velocity = {};
 #define BORDER_COLOR 0xFFFFFFFF
 #define BALL_COLOR 0xFFB4DD13
 
+#define PADDLE_SPEED 20
+
 bool single_player = true;
 
 void draw(primitive_rect rect, color color){
@@ -55,7 +57,7 @@ void reset(){
     };
     p2paddle = (primitive_rect){
         .point = { ctx.width - (single_player ? (SCALE + 1) : (2 * SCALE)), single_player ? SCALE : (ctx.height/2) - SCALE},
-        .size = { SCALE, single_player ? ctx.height - SCALE*2 - 1 : SCALE * 3}
+        .size = { SCALE, single_player ? ctx.height - SCALE * 2 - 1 : SCALE * 3}
     };
     ball = (primitive_rect){
         .point = { (ctx.width/2) - SCALE, (ctx.height/2) - SCALE},
@@ -115,8 +117,8 @@ void update(float delta){
     keypress kp = {};
     for (int i = 0; i < 5 && read_key(&kp); i++){
         primitive_rect old_rect = p1paddle;
-        if (kp.keys[0] == KEY_UP) p1paddle.point.y = max(p1paddle.point.y - (SCALE * delta), SCALE);
-        if (kp.keys[0] == KEY_DOWN) p1paddle.point.y = min(p1paddle.point.y + (SCALE * delta), ctx.height - (SCALE * 4) - 1);
+        if (kp.keys[0] == KEY_UP) p1paddle.point.y = max(p1paddle.point.y - (SCALE * PADDLE_SPEED * delta), SCALE);
+        if (kp.keys[0] == KEY_DOWN) p1paddle.point.y = min(p1paddle.point.y + (SCALE * PADDLE_SPEED * delta), ctx.height - (SCALE * 4) - 1);
         if (kp.keys[0] == KEY_ESC) {
             halt(0);
             return;
